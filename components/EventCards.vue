@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import CtaWebinar from './partials/CtaWebinar.vue'
 import CtaOffline from './partials/CtaOffline.vue'
@@ -12,10 +12,23 @@ import Guzel from './partials/Guzel.vue'
 
 const $toast = useToast()
 
-const isExpanded = reactive([]);
-const windowWidth = ref(0)
-const props = defineProps(['data'])
-const filterTab = ref('')
+interface Data {
+	date: string,
+	time: string,
+	place: string,
+	title: string,
+	description: string,
+	speaker: string,
+	address?: string
+}
+const props = defineProps<{
+	data: Data[]
+}>()
+
+
+const isExpanded = ref<boolean[]>([]);
+const windowWidth = ref<number>(0)
+const filterTab = ref<String>('')
 const results = computed(() => {
 	if (filterTab.value == 'Офлайн') {
 		return props.data.filter(item => item.place.toLowerCase() != 'онлайн')
@@ -40,16 +53,16 @@ function getWindowWidth() {
 	windowWidth.value = window.innerWidth
 }
 
-function toggleExpand(index) {
+function toggleExpand(index: number) {
 	//to toggle expand for each separate card in a list
-	isExpanded[index] = isExpanded[index] ? !isExpanded[index] : true
+	isExpanded.value[index] = isExpanded.value[index] ? !isExpanded.value[index] : true
 }
 
-function filterCards(tabName) {
+function filterCards(tabName: string) {
 	filterTab.value = tabName
 }
 
-function getEventDate(item) {
+function getEventDate(item: Data) {
 	const regEx = /(\d{2})\.(\d{2})\.(\d{2})/
 	const parsedTime = item.time + ":00"
 	const parsedDate = item.date.replace(regEx, "20$3-$2-$1")
@@ -59,28 +72,28 @@ function getEventDate(item) {
 
 /* Days difference counts on time, so floating number is possible. 
 0 means that webinar takes place RIGHT NOW */
-function countDaysDifference(item) {
+function countDaysDifference(item: Data) {
 	const daysDifference = (getEventDate(item).getTime() - currentDate.value) / (1000 * 3600 * 24) //Transform ms to Days
 	return daysDifference
 }
 
-function isWebinar(item) {
+function isWebinar(item: Data) {
 	return item.place.toLowerCase() == 'онлайн' ? true : false
 }
 
-function hasEventPassed(item) {
+function hasEventPassed(item: Data) {
 	return countDaysDifference(item) < 0 ? true : false
 }
 
-function showWebinarCta(item) {
+function showWebinarCta(item: Data) {
 	return countDaysDifference(item) <= 7 && countDaysDifference(item) >= 0 && isWebinar(item) ? true : false
 }
 
-function showOfflineCta(item) {
+function showOfflineCta(item: Data) {
 	return !hasEventPassed(item) && !isWebinar(item) ? true : false
 }
 
-const copyLink = async (item) => {
+const copyLink = async (item: Data) => {
 	const cardLink = siteUrl.value + '#event-' + item.date
 	try {
 		await navigator.clipboard.writeText(cardLink);

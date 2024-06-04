@@ -1,21 +1,26 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 
-const props = defineProps(['places']);
-const emit = defineEmits(['tabSelected'])
-const activeTab = ref('Все')
+const props = defineProps<{
+    places: string[]
+}>()
+const emit = defineEmits<{
+    tabSelected: [tab: string]
+}>()
+
+const activeTab = ref<string>('Все')
 
 
 const placesOnline = props.places.filter((item) => item === 'Онлайн' || item === 'онлайн');
 const placesOffline = props.places.length - placesOnline.length
 
-function handleClick(tab) {
+function handleClick(tab: string) {
     activeTab.value = tab
     emit('tabSelected', tab)
 }
 
 
-function countPlaces(tab) {
+function countPlaces(tab: string) {
     if (tab === 'Онлайн') {
         return placesOnline.length
     } else if (tab === 'Офлайн') {
