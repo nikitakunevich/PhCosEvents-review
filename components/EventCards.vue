@@ -6,11 +6,12 @@ import Tatiana from './partials/Tatiana.vue'
 import Anastasia from './partials/Anastasia.vue'
 import Filters from './partials/Filters.vue'
 import Inna from './partials/Inna.vue'
-
-import { useToast } from 'vue-toast-notification';
 import Guzel from './partials/Guzel.vue'
 
+import { useToast } from 'vue-toast-notification';
 const $toast = useToast()
+
+const { data: landingDate, error } = await useFetch<string>(() => 'https://academy.phcos.ru/api/date.json')
 
 interface Data {
 	date: string,
@@ -77,16 +78,22 @@ function countDaysDifference(item: Data) {
 	return daysDifference
 }
 
-function isWebinar(item: Data) {
-	return item.place.toLowerCase() == 'онлайн' ? true : false
-}
-
 function hasEventPassed(item: Data) {
 	return countDaysDifference(item) < 0 ? true : false
 }
 
+function isWebinar(item: Data) {
+	return item.place.toLowerCase() == 'онлайн' ? true : false
+}
+
 function showWebinarCta(item: Data) {
-	return countDaysDifference(item) <= 7 && countDaysDifference(item) >= 0 && isWebinar(item) ? true : false
+	if ((new Date(landingDate.value!).getTime() == getEventDate(item).getTime())
+		&& !hasEventPassed(item)
+		&& isWebinar(item)) {
+		return true
+	} else {
+		return false
+	}
 }
 
 function showOfflineCta(item: Data) {
@@ -145,17 +152,16 @@ const copyLink = async (item: Data) => {
 						</div>
 						<p v-if="!isWebinar(item)" class="text-grey-800">{{ item.address }}</p>
 
+
 						<CtaOffline v-if="showOfflineCta(item)" :place="item.place" :date="item.date" />
-						<CtaWebinar v-else-if="showWebinarCta(item)" :date="item.date" />
-
-						<p v-if="isWebinar(item) && countDaysDifference(item) >= 7" class="text-grey-700">
-							Регистрация на вебинар
-							открывается за неделю до мероприятия</p>
-						<p v-else-if="isWebinar(item) && countDaysDifference(item) < 0" class="text-grey-700">Вебинар
-							уже
-							прошёл
+						<CtaWebinar v-if="showWebinarCta(item)" :date="item.date" />
+						<p v-if="!showWebinarCta(item) && !showOfflineCta(item) && !hasEventPassed(item)"
+							class="text-grey-700">Мы
+							подготоваливаем
+							вебинар к анонсу! Регистрация
+							откроется в
+							ближайшее время
 						</p>
-
 					</div>
 				</div>
 			</Transition>
