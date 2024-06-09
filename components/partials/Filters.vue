@@ -8,18 +8,16 @@ const emit = defineEmits<{
     tabSelected: [tab: string]
 }>()
 
+
 const activeTab = ref<string>('Все')
-
-
-const placesOnline = props.places.filter((item) => item === 'Онлайн' || item === 'онлайн');
-const placesOffline = props.places.length - placesOnline.length
-
 function handleClick(tab: string) {
     activeTab.value = tab
     emit('tabSelected', tab)
 }
 
 
+const placesOnline = props.places.filter((item) => item === 'Онлайн' || item === 'онлайн');
+const placesOffline = props.places.length - placesOnline.length
 function countPlaces(tab: string) {
     if (tab === 'Онлайн') {
         return placesOnline.length
@@ -28,7 +26,6 @@ function countPlaces(tab: string) {
     } else {
         return props.places.length
     }
-
 }
 
 </script>
