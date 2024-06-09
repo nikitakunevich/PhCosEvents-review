@@ -7,11 +7,8 @@ import Anastasia from './partials/Anastasia.vue'
 import Filters from './partials/Filters.vue'
 import Inna from './partials/Inna.vue'
 import Guzel from './partials/Guzel.vue'
-
 import { useToast } from 'vue-toast-notification';
-const $toast = useToast()
 
-const { data: landingDate, error } = await useFetch<string>(() => 'https://academy.phcos.ru/api/date.json')
 
 interface Data {
 	date: string,
@@ -26,9 +23,6 @@ const props = defineProps<{
 	data: Data[]
 }>()
 
-
-const isExpanded = ref<boolean[]>([]);
-const windowWidth = ref<number>(0)
 const filterTab = ref<String>('')
 const results = computed(() => {
 	if (filterTab.value == 'Офлайн') {
@@ -41,19 +35,20 @@ const results = computed(() => {
 	return props.data
 })
 
-let siteUrl = ref('')
-const currentDate = computed(Date.now)
 
+const windowWidth = ref<number>(0)
+function getWindowWidth() {
+	windowWidth.value = window.innerWidth
+}
+
+let siteUrl = ref('')
 onMounted(() => {
 	getWindowWidth()
 	window.addEventListener('resize', getWindowWidth)
 	siteUrl.value = window.location.origin
 })
 
-function getWindowWidth() {
-	windowWidth.value = window.innerWidth
-}
-
+const isExpanded = ref<boolean[]>([]);
 function toggleExpand(index: number) {
 	//to toggle expand for each separate card in a list
 	isExpanded.value[index] = isExpanded.value[index] ? !isExpanded.value[index] : true
@@ -62,6 +57,7 @@ function toggleExpand(index: number) {
 function filterCards(tabName: string) {
 	filterTab.value = tabName
 }
+
 
 function getEventDate(item: Data) {
 	const regEx = /(\d{2})\.(\d{2})\.(\d{2})/
@@ -73,6 +69,7 @@ function getEventDate(item: Data) {
 
 /* Days difference counts on time, so floating number is possible. 
 0 means that webinar takes place RIGHT NOW */
+const currentDate = computed(Date.now)
 function countDaysDifference(item: Data) {
 	const daysDifference = (getEventDate(item).getTime() - currentDate.value) / (1000 * 3600 * 24) //Transform ms to Days
 	return daysDifference
@@ -86,7 +83,10 @@ function isWebinar(item: Data) {
 	return item.place.toLowerCase() == 'онлайн' ? true : false
 }
 
-function showWebinarCta(item: Data) {
+const { data: landingDate, error } = await useFetch<string>(() =>
+	'https://academy.phcos.ru/api/date.json')
+
+function showCtaWebinar(item: Data) {
 	if ((new Date(landingDate.value!).getTime() == getEventDate(item).getTime())
 		&& !hasEventPassed(item)
 		&& isWebinar(item)) {
@@ -96,10 +96,11 @@ function showWebinarCta(item: Data) {
 	}
 }
 
-function showOfflineCta(item: Data) {
+function showCtaOffline(item: Data) {
 	return !hasEventPassed(item) && !isWebinar(item) ? true : false
 }
 
+const $toast = useToast()
 const copyLink = async (item: Data) => {
 	const cardLink = siteUrl.value + '#event-' + item.date
 	try {
@@ -152,10 +153,9 @@ const copyLink = async (item: Data) => {
 						</div>
 						<p v-if="!isWebinar(item)" class="text-grey-800">{{ item.address }}</p>
 
-
-						<CtaOffline v-if="showOfflineCta(item)" :place="item.place" :date="item.date" />
-						<CtaWebinar v-if="showWebinarCta(item)" :date="item.date" />
-						<p v-if="!showWebinarCta(item) && !showOfflineCta(item) && !hasEventPassed(item)"
+						<CtaOffline v-if="showCtaOffline(item)" :place="item.place" :date="item.date" />
+						<CtaWebinar v-if="showCtaWebinar(item)" :date="item.date" />
+						<p v-if="!showCtaWebinar(item) && !showCtaOffline(item) && !hasEventPassed(item)"
 							class="text-grey-700">Мы
 							подготоваливаем
 							вебинар к анонсу! Регистрация
@@ -182,7 +182,6 @@ const copyLink = async (item: Data) => {
 .cards-leave-to {
 	opacity: 0;
 }
-
 
 @media (width < 768px) {
 
